@@ -54,7 +54,7 @@ class TestClient(TestCase):
         def test_setup(event_name: str):
             call_results.add(event_name)
 
-        joinall(emitter.setup())
+        joinall([event.active_greenlet for event in emitter.setup()])
         self.assertEqual(call_results, {"test-1", "test-2"})
 
     def test_at(self):
@@ -66,15 +66,15 @@ class TestClient(TestCase):
             nonlocal was_run
             was_run = True
 
-        greenlet = action.trigger_at(datetime.now(), "test")
-        greenlet.join()
+        event = action.trigger_at(datetime.now(), "test")
+        event.active_greenlet.join()
         self.assertTrue(was_run)
         was_run = False
-        greenlet = action.trigger_at(datetime.now() + timedelta(seconds=30), "test")
-        self.assertIn(greenlet, action.active_schedules.values())
+        event = action.trigger_at(datetime.now() + timedelta(seconds=30), "test")
+        self.assertIn(event.active_greenlet, action.active_schedules.values())
         try:
             with Timeout(1, TimeoutError):
-                greenlet.join()
+                event.active_greenlet.join()
         except TimeoutError:
             pass
         else:
@@ -90,15 +90,15 @@ class TestClient(TestCase):
             nonlocal was_run
             was_run = True
 
-        greenlet = action.trigger_in(0, "test")
-        greenlet.join()
+        event = action.trigger_in(0, "test")
+        event.active_greenlet.join()
         self.assertTrue(was_run)
         was_run = False
-        greenlet = action.trigger_in(60, "test")
-        self.assertIn(greenlet, action.active_schedules.values())
+        event = action.trigger_in(60, "test")
+        self.assertIn(event.active_greenlet, action.active_schedules.values())
         try:
             with Timeout(1, TimeoutError):
-                greenlet.join()
+                event.active_greenlet.join()
         except TimeoutError:
             pass
         else:

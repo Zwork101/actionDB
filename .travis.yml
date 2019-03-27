@@ -7,7 +7,8 @@ dist: xenial
 sudo: yes
 install:
  - pip install -r requirements.txt
- - pip install flake8
+ - pip install flake8 mypy
 script:
  - python -m unittest discover ./tests
  - flake8
+ - mypy action --ignore-missing-imports

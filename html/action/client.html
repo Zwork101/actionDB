@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.5.3" />
+<title>action.client API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.name small{font-weight:normal}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title"><code>action.client</code> module</h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">from datetime import datetime, timedelta
+from typing import List, Type, Union
+from weakref import WeakValueDictionary
+from uuid import uuid4
+
+from action.db import ActionBackend
+from action.emitter import ActionEmitter
+from action.event import Event
+
+from gevent import spawn_later, Greenlet
+
+
+class Action(ActionEmitter):
+    &#34;&#34;&#34;
+    The client to manage events and storing them.
+
+    This class is the only thing you&#39;ll need to use to fully utilize the action library. It&#39;s important to note that
+    this inherits from `action.emitter.ActionEmitter`, because many of the methods you&#39;ll be using come from that
+    class. Also, in future major versions, the client will be separated from the db, and the database will act as a
+    server. This way people can use trio, threading, asyncio whatever, and not be forced to use gevent.
+
+    Properties
+    ----------
+    db: action.db.ActionBackend
+        This is what the client will use to store the events in
+    active_schedules : weakref.WeakValueDictionary
+        This is a dictionary with event ids to the corresponding greenlets, created by _schedule
+    &#34;&#34;&#34;
+
+    WARN_EXTRA_SETUPS = True
+    &#34;&#34;&#34;See action.Action.setup for information&#34;&#34;&#34;
+    WARN_ALREADY_SCHEDULED = True
+    &#34;&#34;&#34;See action.Action._schedule for information&#34;&#34;&#34;
+
+    def __init__(self, action_db: str = &#39;action.db&#39;,
+                 backend: Type[ActionBackend] = ActionBackend,
+                 timeout: Union[int, float] = 0.5):
+        self.db = backend(action_db, timeout=timeout)
+        self.active_schedules = WeakValueDictionary()  # type: WeakValueDictionary[&#39;str&#39;, Greenlet]
+        self._ran_setup = False
+        super().__init__()
+
+    @staticmethod
+    def generate_event(name: str, sched: datetime, *args, event_id: str = None, **kwargs) -&gt; Event:
+        &#34;&#34;&#34;
+        A shortcut for generating event objects
+
+        There&#39;s not much need to use this yourself unless you want to create your own event ids. Also quick pitfall,
+        you can&#39;t create an event with a kwarg called event_id, this effects trigger_at and trigger_in too.
+
+        Parameters
+        ----------
+        name : str
+            The name of the listener that&#39;ll be triggered
+        sched : datetime.datetime
+            The time that the event will trigger
+        *args : Any
+            Args that will passed into all triggered functions
+        event_id : str
+            If not supplied, a uuid4 hex will be used instead
+        **kwargs : str, Any
+            Kwargs that will passed into all the triggered functions
+
+        Returns
+        -------
+        event : action.event.Event
+            The newly created event
+        &#34;&#34;&#34;
+        event = Event(  # type: ignore
+            event_id if event_id is not None else uuid4().hex,
+            name,
+            sched,
+            args,
+            kwargs
+        )
+        return event  # I&#39;d rather not ignore it, but I&#39;ve fairly certain it&#39;s an issue with mypy
+
+    def schedule(self, event: Event) -&gt; Greenlet:
+        &#34;&#34;&#34;
+        This method will schedule the event based on it&#39;s information
+
+        There&#39;s not much need to call this method directly, hence why it&#39;s protected. You&#39;ll only need this if you&#39;re
+        making your own event objects, which may be the case. This method spawns a greenlet that&#39;ll wait till the
+        specified time to trigger listeners. It will also save the event in the database if it isn&#39;t in it already.
+
+        .. warning:: This greenlet is already linked
+                     If you need to link a call back, make sure to also call the command that&#39;s been linked, thanks!
+
+        Parameters
+        ----------
+        event : action.event.Event
+            The event that will be scheduled
+
+        Returns
+        -------
+        greenlet : gevent.Greenlet
+            The greenlet that has the scheduled event
+
+        Raises
+        ------
+        ResourceWarning
+            If you&#39;re scheduling an event that has already been scheduled, it will raise this error. You can disable
+            this by setting the class variable ``WARN_EXTRA_SCHEDULED`` to ``False``
+        &#34;&#34;&#34;
+        if event.active_greenlet is not None and self.WARN_ALREADY_SCHEDULED:
+            raise ResourceWarning(&#34;Scheduling an event that already has already been spawned.&#34;)
+
+        if not self.db.has_event(event.id):
+            self.db.register_event(event)
+        seconds_until = (event.sched - datetime.now()).total_seconds()
+        greenlet = spawn_later(seconds_until, self.emit, event.name, *event.args, **event.kwargs)
+        event.active_greenlet = greenlet
+        greenlet.link(lambda _: self.db.remove_event(event.id))
+        self.active_schedules[event.id] = greenlet
+        return greenlet
+
+    def setup(self) -&gt; List[Event]:
+        &#34;&#34;&#34;
+        This will read an spawn all events in the database
+
+        It&#39;s absolutely necessary that you call this command, as it readies events that have been stored. The reason it
+        isn&#39;t called in ``__init__`` was because you need to add listeners first. It will then return a list of all the
+        events it spawned.
+
+        Returns
+        -------
+        events : List[action.event.Event]
+            A list of events that were spawned from the database
+
+        Raises
+        ------
+        RuntimeWarning
+            If you run this command more then once, it will raise this warning. You can disable it by setting the class
+            variable ``WARN_EXTRA_SETUPS`` to ``False``.
+        &#34;&#34;&#34;
+        if self._ran_setup and self.WARN_EXTRA_SETUPS:
+            raise RuntimeWarning(&#34;Setup was already called, doing it again will create duplicate events.&#34;)
+        events = []
+
+        for event in self.db.iter_events():
+            self.schedule(event)
+            events.append(event)
+        self._ran_setup = True
+        return events
+
+    def trigger_at(self, date: Union[datetime, float], name: str, *args, **kwargs) -&gt; Event:
+        &#34;&#34;&#34;
+        Trigger an event at a certain time
+
+        This method is used to spawn an event at a specific point in time, if the time is in the past, it will trigger
+        immediately.
+
+        Parameters
+        ----------
+        date : datime.datetime or float
+            The time the event will trigger. If it&#39;s a float, it must be a timestamp
+        name : str
+            The name of the event that will be triggered
+        *args : Any
+            Args that will be passed into the listeners
+        **kwargs : str -&gt; Any
+            Kwargs that will be passed into the listeners
+
+        Returns
+        -------
+        event : action.event.Event
+            The event that has been spawned
+        &#34;&#34;&#34;
+        date = date if isinstance(date, datetime) else datetime.utcfromtimestamp(date)
+        event = self.generate_event(name, date, *args, **kwargs)
+        self.schedule(event)
+        return event
+
+    def trigger_in(self, seconds: Union[timedelta, int], name: str, *args, **kwargs) -&gt; Event:
+        &#34;&#34;&#34;
+        Trigger an event relative to the current time
+
+        This method will trigger an event in a certain amount of time. If the time is negative it will instantly spawn.
+
+        Parameters
+        ----------
+        seconds : datetime.timedelta or int
+            Time after now, if it&#39;s an int it will be in seconds
+        name : str
+            The name of the event that will be triggered
+        *args: Any
+            Args that will be passed into the listeners
+        **kwargs : str -&gt; Any
+            Kwargs that will be passed into the listeners
+
+        &#34;&#34;&#34;
+        date_delta = seconds if isinstance(seconds, timedelta) else timedelta(seconds=seconds)
+        date = datetime.now() + date_delta
+        event = self.generate_event(name, date, *args, **kwargs)
+        self.schedule(event)
+        return event</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="action.client.Action"><code class="flex name class">
+<span>class <span class="ident">Action</span></span>
+<span>(</span><span><small>ancestors:</small> <a title="action.emitter.ActionEmitter" href="emitter.html#action.emitter.ActionEmitter">ActionEmitter</a>)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>The client to manage events and storing them.</p>
+<p>This class is the only thing you'll need to use to fully utilize the action library. It's important to note that
+this inherits from <a title="action.emitter.ActionEmitter" href="emitter.html#action.emitter.ActionEmitter"><code>ActionEmitter</code></a>, because many of the methods you'll be using come from that
+class. Also, in future major versions, the client will be separated from the db, and the database will act as a
+server. This way people can use trio, threading, asyncio whatever, and not be forced to use gevent.</p>
+<h2 id="properties">Properties</h2>
+<dl>
+<dt><strong><code>db</code></strong> :&ensp;<a title="action.db.ActionBackend" href="db.html#action.db.ActionBackend"><code>ActionBackend</code></a></dt>
+<dd>This is what the client will use to store the events in</dd>
+<dt><strong><code>active_schedules</code></strong> :&ensp;<code>weakref.WeakValueDictionary</code></dt>
+<dd>This is a dictionary with event ids to the corresponding greenlets, created by _schedule</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class Action(ActionEmitter):
+    &#34;&#34;&#34;
+    The client to manage events and storing them.
+
+    This class is the only thing you&#39;ll need to use to fully utilize the action library. It&#39;s important to note that
+    this inherits from `action.emitter.ActionEmitter`, because many of the methods you&#39;ll be using come from that
+    class. Also, in future major versions, the client will be separated from the db, and the database will act as a
+    server. This way people can use trio, threading, asyncio whatever, and not be forced to use gevent.
+
+    Properties
+    ----------
+    db: action.db.ActionBackend
+        This is what the client will use to store the events in
+    active_schedules : weakref.WeakValueDictionary
+        This is a dictionary with event ids to the corresponding greenlets, created by _schedule
+    &#34;&#34;&#34;
+
+    WARN_EXTRA_SETUPS = True
+    &#34;&#34;&#34;See action.Action.setup for information&#34;&#34;&#34;
+    WARN_ALREADY_SCHEDULED = True
+    &#34;&#34;&#34;See action.Action._schedule for information&#34;&#34;&#34;
+
+    def __init__(self, action_db: str = &#39;action.db&#39;,
+                 backend: Type[ActionBackend] = ActionBackend,
+                 timeout: Union[int, float] = 0.5):
+        self.db = backend(action_db, timeout=timeout)
+        self.active_schedules = WeakValueDictionary()  # type: WeakValueDictionary[&#39;str&#39;, Greenlet]
+        self._ran_setup = False
+        super().__init__()
+
+    @staticmethod
+    def generate_event(name: str, sched: datetime, *args, event_id: str = None, **kwargs) -&gt; Event:
+        &#34;&#34;&#34;
+        A shortcut for generating event objects
+
+        There&#39;s not much need to use this yourself unless you want to create your own event ids. Also quick pitfall,
+        you can&#39;t create an event with a kwarg called event_id, this effects trigger_at and trigger_in too.
+
+        Parameters
+        ----------
+        name : str
+            The name of the listener that&#39;ll be triggered
+        sched : datetime.datetime
+            The time that the event will trigger
+        *args : Any
+            Args that will passed into all triggered functions
+        event_id : str
+            If not supplied, a uuid4 hex will be used instead
+        **kwargs : str, Any
+            Kwargs that will passed into all the triggered functions
+
+        Returns
+        -------
+        event : action.event.Event
+            The newly created event
+        &#34;&#34;&#34;
+        event = Event(  # type: ignore
+            event_id if event_id is not None else uuid4().hex,
+            name,
+            sched,
+            args,
+            kwargs
+        )
+        return event  # I&#39;d rather not ignore it, but I&#39;ve fairly certain it&#39;s an issue with mypy
+
+    def schedule(self, event: Event) -&gt; Greenlet:
+        &#34;&#34;&#34;
+        This method will schedule the event based on it&#39;s information
+
+        There&#39;s not much need to call this method directly, hence why it&#39;s protected. You&#39;ll only need this if you&#39;re
+        making your own event objects, which may be the case. This method spawns a greenlet that&#39;ll wait till the
+        specified time to trigger listeners. It will also save the event in the database if it isn&#39;t in it already.
+
+        .. warning:: This greenlet is already linked
+                     If you need to link a call back, make sure to also call the command that&#39;s been linked, thanks!
+
+        Parameters
+        ----------
+        event : action.event.Event
+            The event that will be scheduled
+
+        Returns
+        -------
+        greenlet : gevent.Greenlet
+            The greenlet that has the scheduled event
+
+        Raises
+        ------
+        ResourceWarning
+            If you&#39;re scheduling an event that has already been scheduled, it will raise this error. You can disable
+            this by setting the class variable ``WARN_EXTRA_SCHEDULED`` to ``False``
+        &#34;&#34;&#34;
+        if event.active_greenlet is not None and self.WARN_ALREADY_SCHEDULED:
+            raise ResourceWarning(&#34;Scheduling an event that already has already been spawned.&#34;)
+
+        if not self.db.has_event(event.id):
+            self.db.register_event(event)
+        seconds_until = (event.sched - datetime.now()).total_seconds()
+        greenlet = spawn_later(seconds_until, self.emit, event.name, *event.args, **event.kwargs)
+        event.active_greenlet = greenlet
+        greenlet.link(lambda _: self.db.remove_event(event.id))
+        self.active_schedules[event.id] = greenlet
+        return greenlet
+
+    def setup(self) -&gt; List[Event]:
+        &#34;&#34;&#34;
+        This will read an spawn all events in the database
+
+        It&#39;s absolutely necessary that you call this command, as it readies events that have been stored. The reason it
+        isn&#39;t called in ``__init__`` was because you need to add listeners first. It will then return a list of all the
+        events it spawned.
+
+        Returns
+        -------
+        events : List[action.event.Event]
+            A list of events that were spawned from the database
+
+        Raises
+        ------
+        RuntimeWarning
+            If you run this command more then once, it will raise this warning. You can disable it by setting the class
+            variable ``WARN_EXTRA_SETUPS`` to ``False``.
+        &#34;&#34;&#34;
+        if self._ran_setup and self.WARN_EXTRA_SETUPS:
+            raise RuntimeWarning(&#34;Setup was already called, doing it again will create duplicate events.&#34;)
+        events = []
+
+        for event in self.db.iter_events():
+            self.schedule(event)
+            events.append(event)
+        self._ran_setup = True
+        return events
+
+    def trigger_at(self, date: Union[datetime, float], name: str, *args, **kwargs) -&gt; Event:
+        &#34;&#34;&#34;
+        Trigger an event at a certain time
+
+        This method is used to spawn an event at a specific point in time, if the time is in the past, it will trigger
+        immediately.
+
+        Parameters
+        ----------
+        date : datime.datetime or float
+            The time the event will trigger. If it&#39;s a float, it must be a timestamp
+        name : str
+            The name of the event that will be triggered
+        *args : Any
+            Args that will be passed into the listeners
+        **kwargs : str -&gt; Any
+            Kwargs that will be passed into the listeners
+
+        Returns
+        -------
+        event : action.event.Event
+            The event that has been spawned
+        &#34;&#34;&#34;
+        date = date if isinstance(date, datetime) else datetime.utcfromtimestamp(date)
+        event = self.generate_event(name, date, *args, **kwargs)
+        self.schedule(event)
+        return event
+
+    def trigger_in(self, seconds: Union[timedelta, int], name: str, *args, **kwargs) -&gt; Event:
+        &#34;&#34;&#34;
+        Trigger an event relative to the current time
+
+        This method will trigger an event in a certain amount of time. If the time is negative it will instantly spawn.
+
+        Parameters
+        ----------
+        seconds : datetime.timedelta or int
+            Time after now, if it&#39;s an int it will be in seconds
+        name : str
+            The name of the event that will be triggered
+        *args: Any
+            Args that will be passed into the listeners
+        **kwargs : str -&gt; Any
+            Kwargs that will be passed into the listeners
+
+        &#34;&#34;&#34;
+        date_delta = seconds if isinstance(seconds, timedelta) else timedelta(seconds=seconds)
+        date = datetime.now() + date_delta
+        event = self.generate_event(name, date, *args, **kwargs)
+        self.schedule(event)
+        return event</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="action.client.Action.WARN_ALREADY_SCHEDULED"><code class="name">var <span class="ident">WARN_ALREADY_SCHEDULED</span></code></dt>
+<dd>
+<section class="desc"><p>See action.Action._schedule for information</p></section>
+</dd>
+<dt id="action.client.Action.WARN_EXTRA_SETUPS"><code class="name">var <span class="ident">WARN_EXTRA_SETUPS</span></code></dt>
+<dd>
+<section class="desc"><p>See action.Action.setup for information</p></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="action.client.Action.generate_event"><code class="name flex">
+<span>def <span class="ident">generate_event</span></span>(<span>name, sched, *args, event_id=None, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>A shortcut for generating event objects</p>
+<p>There's not much need to use this yourself unless you want to create your own event ids. Also quick pitfall,
+you can't create an event with a kwarg called event_id, this effects trigger_at and trigger_in too.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>The name of the listener that'll be triggered</dd>
+<dt><strong><code>sched</code></strong> :&ensp;<code>datetime.datetime</code></dt>
+<dd>The time that the event will trigger</dd>
+<dt><strong><code>*args</code></strong> :&ensp;<code>Any</code></dt>
+<dd>Args that will passed into all triggered functions</dd>
+<dt><strong><code>event_id</code></strong> :&ensp;<code>str</code></dt>
+<dd>If not supplied, a uuid4 hex will be used instead</dd>
+<dt><strong><code>**kwargs</code></strong> :&ensp;<code>str</code>, <code>Any</code></dt>
+<dd>Kwargs that will passed into all the triggered functions</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>event</code></strong> :&ensp;<a title="action.event.Event" href="event.html#action.event.Event"><code>Event</code></a></dt>
+<dd>The newly created event</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@staticmethod
+def generate_event(name: str, sched: datetime, *args, event_id: str = None, **kwargs) -&gt; Event:
+    &#34;&#34;&#34;
+    A shortcut for generating event objects
+
+    There&#39;s not much need to use this yourself unless you want to create your own event ids. Also quick pitfall,
+    you can&#39;t create an event with a kwarg called event_id, this effects trigger_at and trigger_in too.
+
+    Parameters
+    ----------
+    name : str
+        The name of the listener that&#39;ll be triggered
+    sched : datetime.datetime
+        The time that the event will trigger
+    *args : Any
+        Args that will passed into all triggered functions
+    event_id : str
+        If not supplied, a uuid4 hex will be used instead
+    **kwargs : str, Any
+        Kwargs that will passed into all the triggered functions
+
+    Returns
+    -------
+    event : action.event.Event
+        The newly created event
+    &#34;&#34;&#34;
+    event = Event(  # type: ignore
+        event_id if event_id is not None else uuid4().hex,
+        name,
+        sched,
+        args,
+        kwargs
+    )
+    return event  # I&#39;d rather not ignore it, but I&#39;ve fairly certain it&#39;s an issue with mypy</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="action.client.Action.schedule"><code class="name flex">
+<span>def <span class="ident">schedule</span></span>(<span>self, event)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>This method will schedule the event based on it's information</p>
+<p>There's not much need to call this method directly, hence why it's protected. You'll only need this if you're
+making your own event objects, which may be the case. This method spawns a greenlet that'll wait till the
+specified time to trigger listeners. It will also save the event in the database if it isn't in it already.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning:&ensp;This greenlet is already linked</p>
+<p>If you need to link a call back, make sure to also call the command that's been linked, thanks!</p>
+</div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>event</code></strong> :&ensp;<a title="action.event.Event" href="event.html#action.event.Event"><code>Event</code></a></dt>
+<dd>The event that will be scheduled</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>greenlet</code></strong> :&ensp;<code>gevent.Greenlet</code></dt>
+<dd>The greenlet that has the scheduled event</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><strong><code>ResourceWarning</code></strong></dt>
+<dd>If you're scheduling an event that has already been scheduled, it will raise this error. You can disable
+this by setting the class variable <code>WARN_EXTRA_SCHEDULED</code> to <code>False</code></dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def schedule(self, event: Event) -&gt; Greenlet:
+    &#34;&#34;&#34;
+    This method will schedule the event based on it&#39;s information
+
+    There&#39;s not much need to call this method directly, hence why it&#39;s protected. You&#39;ll only need this if you&#39;re
+    making your own event objects, which may be the case. This method spawns a greenlet that&#39;ll wait till the
+    specified time to trigger listeners. It will also save the event in the database if it isn&#39;t in it already.
+
+    .. warning:: This greenlet is already linked
+                 If you need to link a call back, make sure to also call the command that&#39;s been linked, thanks!
+
+    Parameters
+    ----------
+    event : action.event.Event
+        The event that will be scheduled
+
+    Returns
+    -------
+    greenlet : gevent.Greenlet
+        The greenlet that has the scheduled event
+
+    Raises
+    ------
+    ResourceWarning
+        If you&#39;re scheduling an event that has already been scheduled, it will raise this error. You can disable
+        this by setting the class variable ``WARN_EXTRA_SCHEDULED`` to ``False``
+    &#34;&#34;&#34;
+    if event.active_greenlet is not None and self.WARN_ALREADY_SCHEDULED:
+        raise ResourceWarning(&#34;Scheduling an event that already has already been spawned.&#34;)
+
+    if not self.db.has_event(event.id):
+        self.db.register_event(event)
+    seconds_until = (event.sched - datetime.now()).total_seconds()
+    greenlet = spawn_later(seconds_until, self.emit, event.name, *event.args, **event.kwargs)
+    event.active_greenlet = greenlet
+    greenlet.link(lambda _: self.db.remove_event(event.id))
+    self.active_schedules[event.id] = greenlet
+    return greenlet</code></pre>
+</details>
+</dd>
+<dt id="action.client.Action.setup"><code class="name flex">
+<span>def <span class="ident">setup</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>This will read an spawn all events in the database</p>
+<p>It's absolutely necessary that you call this command, as it readies events that have been stored. The reason it
+isn't called in <code>__init__</code> was because you need to add listeners first. It will then return a list of all the
+events it spawned.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>events</code></strong> :&ensp;<code>List</code>[<code>action.event.Event</code>]</dt>
+<dd>A list of events that were spawned from the database</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><strong><code>RuntimeWarning</code></strong></dt>
+<dd>If you run this command more then once, it will raise this warning. You can disable it by setting the class
+variable <code>WARN_EXTRA_SETUPS</code> to <code>False</code>.</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def setup(self) -&gt; List[Event]:
+    &#34;&#34;&#34;
+    This will read an spawn all events in the database
+
+    It&#39;s absolutely necessary that you call this command, as it readies events that have been stored. The reason it
+    isn&#39;t called in ``__init__`` was because you need to add listeners first. It will then return a list of all the
+    events it spawned.
+
+    Returns
+    -------
+    events : List[action.event.Event]
+        A list of events that were spawned from the database
+
+    Raises
+    ------
+    RuntimeWarning
+        If you run this command more then once, it will raise this warning. You can disable it by setting the class
+        variable ``WARN_EXTRA_SETUPS`` to ``False``.
+    &#34;&#34;&#34;
+    if self._ran_setup and self.WARN_EXTRA_SETUPS:
+        raise RuntimeWarning(&#34;Setup was already called, doing it again will create duplicate events.&#34;)
+    events = []
+
+    for event in self.db.iter_events():
+        self.schedule(event)
+        events.append(event)
+    self._ran_setup = True
+    return events</code></pre>
+</details>
+</dd>
+<dt id="action.client.Action.trigger_at"><code class="name flex">
+<span>def <span class="ident">trigger_at</span></span>(<span>self, date, name, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Trigger an event at a certain time</p>
+<p>This method is used to spawn an event at a specific point in time, if the time is in the past, it will trigger
+immediately.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>date</code></strong> :&ensp;<code>datime.datetime</code> or <code>float</code></dt>
+<dd>The time the event will trigger. If it's a float, it must be a timestamp</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>The name of the event that will be triggered</dd>
+<dt><strong><code>*args</code></strong> :&ensp;<code>Any</code></dt>
+<dd>Args that will be passed into the listeners</dd>
+<dt><strong><code>**kwargs</code></strong> :&ensp;<code>str</code> -&gt; <code>Any</code></dt>
+<dd>Kwargs that will be passed into the listeners</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>event</code></strong> :&ensp;<a title="action.event.Event" href="event.html#action.event.Event"><code>Event</code></a></dt>
+<dd>The event that has been spawned</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def trigger_at(self, date: Union[datetime, float], name: str, *args, **kwargs) -&gt; Event:
+    &#34;&#34;&#34;
+    Trigger an event at a certain time
+
+    This method is used to spawn an event at a specific point in time, if the time is in the past, it will trigger
+    immediately.
+
+    Parameters
+    ----------
+    date : datime.datetime or float
+        The time the event will trigger. If it&#39;s a float, it must be a timestamp
+    name : str
+        The name of the event that will be triggered
+    *args : Any
+        Args that will be passed into the listeners
+    **kwargs : str -&gt; Any
+        Kwargs that will be passed into the listeners
+
+    Returns
+    -------
+    event : action.event.Event
+        The event that has been spawned
+    &#34;&#34;&#34;
+    date = date if isinstance(date, datetime) else datetime.utcfromtimestamp(date)
+    event = self.generate_event(name, date, *args, **kwargs)
+    self.schedule(event)
+    return event</code></pre>
+</details>
+</dd>
+<dt id="action.client.Action.trigger_in"><code class="name flex">
+<span>def <span class="ident">trigger_in</span></span>(<span>self, seconds, name, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Trigger an event relative to the current time</p>
+<p>This method will trigger an event in a certain amount of time. If the time is negative it will instantly spawn.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>seconds</code></strong> :&ensp;<code>datetime.timedelta</code> or <code>int</code></dt>
+<dd>Time after now, if it's an int it will be in seconds</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>The name of the event that will be triggered</dd>
+<dt><strong><code>*args</code></strong> :&ensp;<code>Any</code></dt>
+<dd>Args that will be passed into the listeners</dd>
+<dt><strong><code>**kwargs</code></strong> :&ensp;<code>str</code> -&gt; <code>Any</code></dt>
+<dd>Kwargs that will be passed into the listeners</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def trigger_in(self, seconds: Union[timedelta, int], name: str, *args, **kwargs) -&gt; Event:
+    &#34;&#34;&#34;
+    Trigger an event relative to the current time
+
+    This method will trigger an event in a certain amount of time. If the time is negative it will instantly spawn.
+
+    Parameters
+    ----------
+    seconds : datetime.timedelta or int
+        Time after now, if it&#39;s an int it will be in seconds
+    name : str
+        The name of the event that will be triggered
+    *args: Any
+        Args that will be passed into the listeners
+    **kwargs : str -&gt; Any
+        Kwargs that will be passed into the listeners
+
+    &#34;&#34;&#34;
+    date_delta = seconds if isinstance(seconds, timedelta) else timedelta(seconds=seconds)
+    date = datetime.now() + date_delta
+    event = self.generate_event(name, date, *args, **kwargs)
+    self.schedule(event)
+    return event</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="action.emitter.ActionEmitter" href="emitter.html#action.emitter.ActionEmitter">ActionEmitter</a></b></code>:
+<ul class="hlist">
+<li><code><a title="action.emitter.ActionEmitter.__init__" href="emitter.html#action.emitter.ActionEmitter.__init__">__init__</a></code></li>
+<li><code><a title="action.emitter.ActionEmitter.emit" href="emitter.html#action.emitter.ActionEmitter.emit">emit</a></code></li>
+<li><code><a title="action.emitter.ActionEmitter.listen" href="emitter.html#action.emitter.ActionEmitter.listen">listen</a></code></li>
+<li><code><a title="action.emitter.ActionEmitter.listen_once" href="emitter.html#action.emitter.ActionEmitter.listen_once">listen_once</a></code></li>
+<li><code><a title="action.emitter.ActionEmitter.remove_all" href="emitter.html#action.emitter.ActionEmitter.remove_all">remove_all</a></code></li>
+<li><code><a title="action.emitter.ActionEmitter.remove_listener" href="emitter.html#action.emitter.ActionEmitter.remove_listener">remove_listener</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="action" href="index.html">action</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="action.client.Action" href="#action.client.Action">Action</a></code></h4>
+<ul class="">
+<li><code><a title="action.client.Action.WARN_ALREADY_SCHEDULED" href="#action.client.Action.WARN_ALREADY_SCHEDULED">WARN_ALREADY_SCHEDULED</a></code></li>
+<li><code><a title="action.client.Action.WARN_EXTRA_SETUPS" href="#action.client.Action.WARN_EXTRA_SETUPS">WARN_EXTRA_SETUPS</a></code></li>
+<li><code><a title="action.client.Action.generate_event" href="#action.client.Action.generate_event">generate_event</a></code></li>
+<li><code><a title="action.client.Action.schedule" href="#action.client.Action.schedule">schedule</a></code></li>
+<li><code><a title="action.client.Action.setup" href="#action.client.Action.setup">setup</a></code></li>
+<li><code><a title="action.client.Action.trigger_at" href="#action.client.Action.trigger_at">trigger_at</a></code></li>
+<li><code><a title="action.client.Action.trigger_in" href="#action.client.Action.trigger_in">trigger_in</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.5.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
