@@ -6,6 +6,8 @@
 [![Build Status](https://travis-ci.org/Zwork101/actionDB.svg?branch=master)](https://travis-ci.org/Zwork101/actionDB)
 Full docs [here](https://zwork101.github.io/action/)
 
+[![Try on repl.it](https://repl-badge.jajoosam.repl.co/try.png)](https://repl.it/@21natzil/Action-Demo?ref=button)
+
 ## Introduction
 
 Welcome to actionDB, the DB that comes to you. ActionDB is designed to keep events that need to be summoned at a later
